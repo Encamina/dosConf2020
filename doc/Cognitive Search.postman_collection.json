@@ -1,0 +1,257 @@
+{
+	"info": {
+		"_postman_id": "1b284b2c-32cc-4d20-a4cc-9671aae99a16",
+		"name": "Cognitive Search",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "https://cognitive.search.windows.net/datasources?api-version=2019-05-06",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "api-key",
+						"value": "1681CC91B8585FBA527B9BCFE20DCD3B",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{   \r\n    \"name\" : \"demodata\",  \r\n    \"description\" : \"Demo files to demonstrate cognitive search capabilities.\",  \r\n    \"type\" : \"azureblob\",\r\n    \"credentials\" :\r\n    { \"connectionString\" :\r\n      \"DefaultEndpointsProtocol=https;AccountName=storagedosconf;AccountKey=CtIUlmS3JmOdWRY6p4N4ZwiWZv8siPf25CpghdYVEZeMXoqvq/etiXqasDzSJW3PRnW8um5AJaMiwh8UYQpjsQ==;EndpointSuffix=core.windows.net\"\r\n    },  \r\n    \"container\" : { \"name\" : \"image-datasource\" }\r\n}"
+				},
+				"url": {
+					"raw": "https://cognitivesearchdosconf.search.windows.net/datasources?api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"cognitivesearchdosconf",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"datasources"
+					],
+					"query": [
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						},
+						{
+							"key": "",
+							"value": "",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://cognitive.search.windows.net/skillsets/demoskillset?api-version=2019-05-06",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "api-key",
+						"value": "1681CC91B8585FBA527B9BCFE20DCD3B",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"description\": \"Extract entities, detect language and extract key-phrases\",\n  \"skills\":\n  [\n  \t{\n\t\t\"description\": \"Extracts text (plain and structured) from image.\",\n\t\t\"@odata.type\": \"#Microsoft.Skills.Vision.OcrSkill\",\n\t\t\"context\": \"/document/normalized_images/*\",\n\t\t\"defaultLanguageCode\": null,\n\t\t\"detectOrientation\": true,\n\t\t\"inputs\": [\n\t\t\t{\n\t\t\t\t\"name\": \"image\",\n\t\t\t\t\"source\": \"/document/normalized_images/*\"\n\t\t\t}\n\t\t],\n\t\t\"outputs\": [\n\t\t\t{\n\t\t\t\t\"name\": \"text\",\n\t\t\t\t\"targetName\": \"myOcrText\"\n\t\t\t}\n\t\t]\n\t},\n\t{\n      \"@odata.type\": \"#Microsoft.Skills.Text.MergeSkill\",\n      \"description\": \"Create merged_text, which includes all the textual representation of each image inserted at the right location in the content field.\",\n      \"context\": \"/document\",\n      \"insertPreTag\": \" \",\n      \"insertPostTag\": \" \",\n      \"inputs\": [\n        {\n          \"name\":\"text\", \"source\": \"/document/content\"\n        },\n        {\n          \"name\": \"itemsToInsert\", \"source\": \"/document/normalized_images/*/myOcrText\"\n        },\n        {\n          \"name\":\"offsets\", \"source\": \"/document/normalized_images/*/contentOffset\" \n        }\n      ],\n      \"outputs\": [\n        {\n          \"name\": \"mergedText\", \n          \"targetName\" : \"merged_text\"\n        }\n      ]\n    },\n  \t{\n      \"@odata.type\": \"#Microsoft.Skills.Text.EntityRecognitionSkill\",\n      \"categories\": [ \"Organization\" ],\n      \"defaultLanguageCode\": \"en\",\n      \"inputs\": [\n        {\n          \"name\": \"text\", \"source\": \"/document/merged_text\"\n        }\n      ],\n      \"outputs\": [\n        {\n          \"name\": \"organizations\", \"targetName\": \"organizations\"\n        }\n      ]\n    },\n    {\n      \"@odata.type\": \"#Microsoft.Skills.Text.LanguageDetectionSkill\",\n      \"inputs\": [\n        {\n          \"name\": \"text\", \"source\": \"/document/content\"\n        }\n      ],\n      \"outputs\": [\n        {\n          \"name\": \"languageCode\",\n          \"targetName\": \"languageCode\"\n        }\n      ]\n    },\n    {\n      \"@odata.type\": \"#Microsoft.Skills.Text.SplitSkill\",\n      \"textSplitMode\" : \"pages\", \n      \"maximumPageLength\": 4000,\n      \"inputs\": [\n      {\n        \"name\": \"text\",\n        \"source\": \"/document/content\"\n      },\n      { \n        \"name\": \"languageCode\",\n        \"source\": \"/document/languageCode\"\n      }\n    ],\n    \"outputs\": [\n      {\n            \"name\": \"textItems\",\n            \"targetName\": \"pages\"\n      }\n    ]\n  },\n    {\n      \"@odata.type\": \"#Microsoft.Skills.Text.KeyPhraseExtractionSkill\",\n      \"context\": \"/document/pages/*\",\n      \"inputs\": [\n        {\n          \"name\": \"text\", \"source\": \"/document/merged_text\"\n        },\n        {\n          \"name\":\"languageCode\", \"source\": \"/document/languageCode\"\n        }\n      ],\n      \"outputs\": [\n        {\n          \"name\": \"keyPhrases\",\n          \"targetName\": \"keyPhrases\"\n        }\n      ]\n    }\n  ],\n  \"cognitiveServices\": {\n    \"@odata.type\": \"#Microsoft.Azure.Search.CognitiveServicesByKey\",\n    \"description\": \"Toquero As A Service\",\n    \"key\": \"44d4cf2afa8248e1b7ac904d52495cad\"\n  }\n}"
+				},
+				"url": {
+					"raw": "https://cognitivesearchdosconf.search.windows.net/skillsets/demoskillset?api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"cognitivesearchdosconf",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"skillsets",
+						"demoskillset"
+					],
+					"query": [
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://cognitive.search.windows.net/indexes/demoindex?api-version=2019-05-06",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "api-key",
+						"value": "1681CC91B8585FBA527B9BCFE20DCD3B",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"fields\": [\r\n    {\r\n      \"name\": \"id\",\r\n      \"type\": \"Edm.String\",\r\n      \"key\": true,\r\n      \"searchable\": true,\r\n      \"filterable\": false,\r\n      \"facetable\": false,\r\n      \"sortable\": true\r\n    },\r\n    {\r\n      \"name\": \"name\",\r\n      \"type\": \"Edm.String\",\r\n      \"sortable\": false,\r\n      \"searchable\": true,\r\n      \"filterable\": false,\r\n      \"facetable\": false\r\n    },\r\n    {\r\n      \"name\": \"content\",\r\n      \"type\": \"Edm.String\",\r\n      \"sortable\": false,\r\n      \"searchable\": true,\r\n      \"filterable\": false,\r\n      \"facetable\": false\r\n    },\r\n    {\r\n      \"name\": \"languageCode\",\r\n      \"type\": \"Edm.String\",\r\n      \"searchable\": true,\r\n      \"filterable\": false,\r\n      \"facetable\": false\r\n    },\r\n    {\r\n      \"name\": \"keyPhrases\",\r\n      \"type\": \"Collection(Edm.String)\",\r\n      \"searchable\": true,\r\n      \"filterable\": false,\r\n      \"facetable\": false\r\n    },\r\n    {\r\n      \"name\": \"organizations\",\r\n      \"type\": \"Collection(Edm.String)\",\r\n      \"searchable\": true,\r\n      \"sortable\": false,\r\n      \"filterable\": false,\r\n      \"facetable\": false\r\n    },\r\n    {\r\n        \"name\": \"myOcrText\",\r\n        \"type\": \"Collection(Edm.String)\",\r\n        \"searchable\": true,\r\n        \"filterable\": false,\r\n        \"retrievable\": true,\r\n        \"sortable\": false,\r\n        \"facetable\": false,\r\n        \"key\": false,\r\n        \"indexAnalyzer\": null,\r\n        \"searchAnalyzer\": null,\r\n        \"analyzer\": null,\r\n        \"synonymMaps\": []\r\n    }\r\n  ]\r\n}"
+				},
+				"url": {
+					"raw": "https://cognitivesearchdosconf.search.windows.net/indexes/demoindex?api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"cognitivesearchdosconf",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"indexes",
+						"demoindex"
+					],
+					"query": [
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://cognitive.search.windows.net/indexers/demoindexer?api-version=2019-05-06",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "api-key",
+						"value": "1681CC91B8585FBA527B9BCFE20DCD3B",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\":\"demoindexer\",\t\r\n  \"dataSourceName\" : \"demodata\",\r\n  \"targetIndexName\" : \"demoindex\",\r\n  \"skillsetName\" : \"demoskillset\",\r\n  \"fieldMappings\" : [\r\n  \t\t{\r\n          \"sourceFieldName\" : \"metadata_storage_path\",\r\n          \"targetFieldName\" : \"id\",\r\n          \"mappingFunction\" : \r\n            { \"name\" : \"base64Encode\" }\r\n        },\r\n        {\r\n          \"sourceFieldName\" : \"metadata_storage_path\",\r\n          \"targetFieldName\" : \"metadata_storage_path\"\r\n        },\r\n        {\r\n          \"sourceFieldName\": \"metadata_storage_name\",\r\n          \"targetFieldName\": \"name\"\r\n        },\r\n        {\r\n          \"sourceFieldName\" : \"content\",\r\n          \"targetFieldName\" : \"content\"\r\n        }\r\n   ],\r\n  \"outputFieldMappings\" : \r\n  [\r\n        {\r\n          \"sourceFieldName\" : \"/document/organizations\", \r\n          \"targetFieldName\" : \"organizations\"\r\n        },\r\n        {\r\n          \"sourceFieldName\" : \"/document/pages/*/keyPhrases/*\", \r\n          \"targetFieldName\" : \"keyPhrases\"\r\n        },\r\n        {\r\n            \"sourceFieldName\": \"/document/languageCode\",\r\n            \"targetFieldName\": \"languageCode\"\r\n        },\r\n         {\r\n            \"sourceFieldName\": \"/document/normalized_images/*/myOcrText\",\r\n            \"targetFieldName\": \"myOcrText\"\r\n        }    \r\n  ],\r\n  \"parameters\":\r\n  {\r\n  \t\"maxFailedItems\":-1,\r\n  \t\"maxFailedItemsPerBatch\":-1,\r\n  \t\"configuration\": \r\n    {\r\n    \t\"dataToExtract\": \"contentAndMetadata\",\r\n     \t\"imageAction\": \"generateNormalizedImages\"\r\n\t\t}\r\n  }\r\n}"
+				},
+				"url": {
+					"raw": "https://cognitivesearchdosconf.search.windows.net/indexers/demoindexer?api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"cognitivesearchdosconf",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"indexers",
+						"demoindexer"
+					],
+					"query": [
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ttps://cognitive.search.windows.net/indexers/demoindexer/status?api-version=2019-05-06",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "api-key",
+						"value": "1681CC91B8585FBA527B9BCFE20DCD3B",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://cognitivesearchdosconf.search.windows.net/indexers/demoindexer/status?api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"cognitivesearchdosconf",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"indexers",
+						"demoindexer",
+						"status"
+					],
+					"query": [
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://identifierskill.azurewebsites.net/api/Function1?code=rClz07cWDOl0WBA1asileV70ROqpZk4AA0VdUGvUatMf25TLrf1vig==",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"values\": [\n        {\n        \t\"recordId\": \"a1\",\n            \"data\":\n            {\n    \t\t\t\"filePath\": \"PRuebaDeRUta\"        \n            }\n        }\n   ]\n}"
+				},
+				"url": {
+					"raw": "https://identifierskill.azurewebsites.net/api/Function1?code=rClz07cWDOl0WBA1asileV70ROqpZk4AA0VdUGvUatMf25TLrf1vig==",
+					"protocol": "https",
+					"host": [
+						"identifierskill",
+						"azurewebsites",
+						"net"
+					],
+					"path": [
+						"api",
+						"Function1"
+					],
+					"query": [
+						{
+							"key": "code",
+							"value": "rClz07cWDOl0WBA1asileV70ROqpZk4AA0VdUGvUatMf25TLrf1vig=="
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
